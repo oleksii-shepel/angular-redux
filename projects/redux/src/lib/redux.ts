@@ -111,7 +111,7 @@ function createStore(reducer: Function, preloadedState?: any, enhancer?: Functio
   let isDispatching = false;
 
   function getState(): any {
-    return currentState;
+    return currentState.value();
   }
 
   function subscribe(next?: any, error?: any, complete?: any): Subscription {
