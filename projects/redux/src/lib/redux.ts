@@ -107,13 +107,8 @@ function createStore(reducer: Function, preloadedState?: any, enhancer?: Functio
   }
 
   let currentReducer = reducer;
-  let currentState = preloadedState;
-  let observer: Observer<any> | undefined = undefined;
-  let isObserverInitialized = false;
+  let currentState = new BehaviorSubject<any>(preloadedState);
   let isDispatching = false;
-  let actionQueue: any = [];
-
-  let state = new BehaviorSubject<any>(preloadedState);
 
   function getState(): any {
     return currentState;
@@ -121,9 +116,9 @@ function createStore(reducer: Function, preloadedState?: any, enhancer?: Functio
 
   function subscribe(next?: any, error?: any, complete?: any): Subscription {
     if (typeof next === 'function') {
-      return state.subscribe(next, error, complete);
+      return currentState.subscribe(next, error, complete);
     } else {
-      return state.subscribe(next as Partial<Observer<any>>);
+      return currentState.subscribe(next as Partial<Observer<any>>);
     }
   }
 
@@ -140,19 +135,16 @@ function createStore(reducer: Function, preloadedState?: any, enhancer?: Functio
     if (isDispatching) {
       throw new Error("Reducers may not dispatch actions.");
     }
-    if (isObserverInitialized) {
-      processAction(action);
-    } else {
-      actionQueue.push(action);
-    }
+
+    processAction(action);
     return action;
   }
 
   function processAction(action: any): void {
     try {
       isDispatching = true;
-      currentState = currentReducer(currentState, action);
-      state.next(currentState);
+      const state = currentReducer(currentState.value(), action);
+      currentState.next(state);
     } finally {
       isDispatching = false;
     }
@@ -177,7 +169,7 @@ function createStore(reducer: Function, preloadedState?: any, enhancer?: Functio
     subscribe,
     getState,
     replaceReducer,
-    state
+    state: currentState
   }
 }
 
