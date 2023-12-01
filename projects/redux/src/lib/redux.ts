@@ -1,4 +1,4 @@
-import { BehaviorSubject, Observable, Observer, Subscription } from "rxjs";
+import { BehaviorSubject, Observer, Subscription } from "rxjs";
 
 // src/types/actions.ts
 function isAction(action: any): boolean {
@@ -86,6 +86,7 @@ function isDate(val: any): boolean {
 
 // src/createStore.ts
 function createStore(reducer: Function, preloadedState?: any, enhancer?: Function): any {
+
   if (typeof reducer !== "function") {
     throw new Error(`Expected the root reducer to be a function. Instead, received: '${kindOf(reducer)}'`);
   }
@@ -111,12 +112,12 @@ function createStore(reducer: Function, preloadedState?: any, enhancer?: Functio
   let isDispatching = false;
 
   function getState(): any {
-    return currentState.value();
+    return currentState.value;
   }
 
   function subscribe(next?: any, error?: any, complete?: any): Subscription {
     if (typeof next === 'function') {
-      return currentState.subscribe(next, error, complete);
+      return currentState.subscribe({next, error, complete});
     } else {
       return currentState.subscribe(next as Partial<Observer<any>>);
     }
@@ -143,8 +144,8 @@ function createStore(reducer: Function, preloadedState?: any, enhancer?: Functio
   function processAction(action: any): void {
     try {
       isDispatching = true;
-      const state = currentReducer(currentState.value(), action);
-      currentState.next(state);
+      const nextState = currentReducer(currentState.value, action);
+      currentState.next(nextState);
     } finally {
       isDispatching = false;
     }
@@ -168,8 +169,7 @@ function createStore(reducer: Function, preloadedState?: any, enhancer?: Functio
     dispatch,
     subscribe,
     getState,
-    replaceReducer,
-    state: currentState
+    replaceReducer
   }
 }
 
@@ -307,7 +307,7 @@ function applyMiddleware(...middlewares: Middleware[]) {
       dispatch: (action: any, ...args: any[]) => dispatch(action, ...args)
     };
     const chain = middlewares.map((middleware) => middleware(middlewareAPI));
-    dispatch = compose(...chain).bind(store)(store.dispatch.bind(store));
+    dispatch = compose(...chain)(store.dispatch);
     return {
       ...store,
       dispatch
