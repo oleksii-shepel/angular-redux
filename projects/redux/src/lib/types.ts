@@ -11,8 +11,8 @@ export interface AsyncAction<T = any> {
   (): Promise<T>;
 }
 
-export type SyncFunction<T> = (dispatch: Function, getState?: Function) => T;
-export type AsyncFunction<T> = (dispatch: Function, getState?: Function) => Promise<T>;
+export type SyncFunction<T> = (...args: any[]) => (dispatch: Function, getState?: Function) => T;
+export type AsyncFunction<T> = (...args: any[]) => (dispatch: Function, getState?: Function) => Promise<T>;
 
 export type Reducer<T> = (state: T | undefined, action: Action<any>) => T | undefined;
 
