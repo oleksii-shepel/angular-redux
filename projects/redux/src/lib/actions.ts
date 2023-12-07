@@ -2,7 +2,7 @@ import { AsyncFunction, SyncFunction, kindOf } from "./types";
 
 export function createAction<T>(type: string, fn: SyncFunction<T> | AsyncFunction<T>) {
   return (...args: any[]) => (dispatch: Function, getState?: Function) => {
-    const result = fn(args)(dispatch, getState);
+    const result = fn(...args)(dispatch, getState);
     if (result instanceof Promise && (result as any)?.then instanceof Function) {
       return result.then(
         (data) => dispatch({ type: `${type}_SUCCESS`, payload: data }),
