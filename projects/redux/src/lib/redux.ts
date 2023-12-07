@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable, Observer, Subscription, UnaryFunction, exhaustMap, firstValueFrom, map } from "rxjs";
-import { AnyFn, isPlainObject, Action, AsyncAction, kindOf, Store } from "./types";
+import { AnyFn, isPlainObject, Action, AsyncAction, kindOf, Store, Middleware } from "./types";
 import { Semaphore } from "./semaphore";
 
 const randomString = (): string => Math.random().toString(36).substring(7).split("").join(".");
@@ -181,10 +181,6 @@ function compose(...funcs: Function[]): Function {
   }
 
   return funcs.reduce((a, b) => (...args: any[]) => a(b(...args)));
-}
-
-export interface Middleware {
-  (store: any): (next: (action: any) => any) => Promise<(action: any) => any> | any;
 }
 
 function composeMiddleware(...funcs: Middleware[]): Function {

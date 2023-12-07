@@ -14,8 +14,11 @@ export interface AsyncAction<T = any> {
 export type SyncFunction<T> = (dispatch: Function, getState?: Function) => T;
 export type AsyncFunction<T> = (dispatch: Function, getState?: Function) => Promise<T>;
 
-export type Reducer<T> = (state: T | undefined, action: Action<any>) => T | undefined
+export type Reducer<T> = (state: T | undefined, action: Action<any>) => T | undefined;
 
+export interface Middleware {
+  (store: any): (next: (action: any) => any) => Promise<(action: any) => any> | any;
+}
 export interface Store<K> {
   dispatch: (action: Action<any> | AsyncAction<any>) => any;
   getState: () => K;
