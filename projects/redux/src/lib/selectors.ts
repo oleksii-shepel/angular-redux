@@ -94,11 +94,12 @@ export function nomemoize(fn: AnyFn) {
 export function createSelector(
   selectors: SelectorFunction | SelectorFunction[],
   projector?: ProjectorFunction,
+  options: { memoizeSelectors?: AnyFn; memoizeProjector?: AnyFn } = {}
+
 ): MemoizedSelector {
   const isSelectorArray = Array.isArray(selectors);
   const selectorArray: SelectorFunction[] = isSelectorArray ? selectors : [selectors];
-  const memoizeSelectors = asyncMemoize;
-  const memoizeProjector = projector ? defaultMemoize : nomemoize;
+  const { memoizeSelectors = asyncMemoize, memoizeProjector = defaultMemoize } = options;
 
   if (isSelectorArray && !projector) {
     throw new Error("Invalid parameters: When 'selectors' is an array, 'projector' function should be provided.");
