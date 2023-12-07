@@ -1,23 +1,7 @@
-import { BehaviorSubject, Observer, Subscription } from "rxjs";
+import { BehaviorSubject, Observable, Observer, Subscription, UnaryFunction, exhaustMap, firstValueFrom, map } from "rxjs";
+import { AnyFn, isPlainObject, Action, AsyncAction, kindOf, Store } from "./types";
+import { Semaphore } from "./semaphore";
 
-// src/types/actions.ts
-function isAction(action: any): boolean {
-  return isPlainObject(action) && "type" in action && typeof action.type === "string";
-}
-
-function isPlainObject(obj: any): boolean {
-  if (typeof obj !== "object" || obj === null)
-    return false;
-
-  let proto = obj;
-  while (Object.getPrototypeOf(proto) !== null) {
-    proto = Object.getPrototypeOf(proto);
-  }
-
-  return Object.getPrototypeOf(obj) === proto;
-}
-
-// src/utils/actionTypes.ts
 const randomString = (): string => Math.random().toString(36).substring(7).split("").join(".");
 
 const ActionTypes = {
@@ -28,64 +12,7 @@ const ActionTypes = {
 
 const actionTypes_default = ActionTypes;
 
-// src/utils/kindOf.ts
-function kindOf(val: any): string {
-  if (val === undefined)
-    return "undefined";
-  if (val === null)
-    return "null";
-
-  const type = typeof val;
-  switch (type) {
-    case "boolean":
-    case "string":
-    case "number":
-    case "symbol":
-    case "function": {
-      return type;
-    }
-  }
-
-  if (Array.isArray(val))
-    return "array";
-
-  if (isDate(val))
-    return "date";
-
-  if (isError(val))
-    return "error";
-
-  const constructorName = ctorName(val);
-  switch (constructorName) {
-    case "Symbol":
-    case "Promise":
-    case "WeakMap":
-    case "WeakSet":
-    case "Map":
-    case "Set":
-      return constructorName;
-  }
-
-  return Object.prototype.toString.call(val).slice(8, -1).toLowerCase().replace(/\s/g, "");
-}
-
-function ctorName(val: any): string {
-  return typeof val.constructor === "function" ? val.constructor.name : null;
-}
-
-function isError(val: any): boolean {
-  return val instanceof Error || typeof val.message === "string" && val.constructor && typeof val.constructor.stackTraceLimit === "number";
-}
-
-function isDate(val: any): boolean {
-  if (val instanceof Date)
-    return true;
-
-  return typeof val.toDateString === "function" && typeof val.getDate === "function" && typeof val.setDate === "function";
-}
-
-// src/createStore.ts
-function createStore(reducer: Function, preloadedState?: any, enhancer?: Function): any {
+function createStore<K>(reducer: Function, preloadedState?: K | undefined, enhancer?: Function): Store<K> {
 
   if (typeof reducer !== "function") {
     throw new Error(`Expected the root reducer to be a function. Instead, received: '${kindOf(reducer)}'`);
@@ -108,14 +35,14 @@ function createStore(reducer: Function, preloadedState?: any, enhancer?: Functio
   }
 
   let currentReducer = reducer;
-  let currentState = new BehaviorSubject<any>(preloadedState);
+  let currentState = new BehaviorSubject<K>(preloadedState as K);
   let isDispatching = false;
 
-  function getState(): any {
+  function getState(): K {
     return currentState.value;
   }
 
-  function subscribe(next?: any, error?: any, complete?: any): Subscription {
+  function subscribe(next?: AnyFn | Observer<any>, error?: AnyFn, complete?: AnyFn): Subscription {
     if (typeof next === 'function') {
       return currentState.subscribe({next, error, complete});
     } else {
@@ -123,8 +50,8 @@ function createStore(reducer: Function, preloadedState?: any, enhancer?: Functio
     }
   }
 
-  function dispatch(action: any): any {
-    if (!isPlainObject(action)) {
+  function dispatch(action: Action<any> | AsyncAction<any>): any {
+    if (!isPlainObject(action) || action instanceof Function) {
       throw new Error(`Actions must be plain objects. Instead, the actual type was: '${kindOf(action)}'. You may need to add middleware to your store setup to handle dispatching other values, such as 'redux-thunk' to handle dispatching functions. See https://redux.js.org/tutorials/fundamentals/part-4-store#middleware and https://redux.js.org/tutorials/fundamentals/part-6-async-logic#using-the-redux-thunk-middleware for examples.`);
     }
     if (typeof action.type === "undefined") {
@@ -137,6 +64,7 @@ function createStore(reducer: Function, preloadedState?: any, enhancer?: Functio
       throw new Error("Reducers may not dispatch actions.");
     }
 
+    // queueScheduler.schedule(() => processAction(action));
     processAction(action);
     return action;
   }
@@ -161,19 +89,23 @@ function createStore(reducer: Function, preloadedState?: any, enhancer?: Functio
     });
   }
 
+  function pipe(...operators: Array<UnaryFunction<Observable<K>, Observable<any>>>): Observable<any> {
+    return operators.reduce((source, operator) => operator(source), currentState as Observable<K>);
+  }
+
   dispatch({
     type: actionTypes_default.INIT
   });
 
   return {
     dispatch,
-    subscribe,
     getState,
-    replaceReducer
+    replaceReducer,
+    pipe,
+    subscribe
   }
 }
 
-// src/combineReducers.ts
 function assertReducerShape(reducers: any): void {
   const reducerKeys = Object.keys(reducers);
 
@@ -239,46 +171,6 @@ function combineReducers(reducers: any): Function {
   };
 }
 
-// src/bindActionCreators.ts
-function bindActionCreator(actionCreator: Function, dispatch: Function): Function {
-  return function(this: any, ...args: any[]): any {
-    return dispatch(actionCreator.apply(this, args));
-  };
-}
-
-function bindActionCreators(actionCreators: any, dispatch: Function): any {
-  if (typeof actionCreators === "function") {
-    return bindActionCreator(actionCreators, dispatch);
-  }
-
-  if (typeof actionCreators !== "object" || actionCreators === null) {
-    throw new Error(`bindActionCreators expected an object or a function, but instead received: '${kindOf(actionCreators)}'. Did you write "import ActionCreators from" instead of "import * as ActionCreators from"?`);
-  }
-
-  const keys = Object.keys(actionCreators);
-  const numKeys = keys.length;
-
-  if (numKeys === 1) {
-    const actionCreator = actionCreators[keys[0]];
-
-    if (typeof actionCreator === "function") {
-      return bindActionCreator(actionCreator, dispatch);
-    }
-  }
-
-  for (let i = 0; i < numKeys; i++) {
-    const key = keys[i];
-    const actionCreator = actionCreators[key];
-
-    if (typeof actionCreator === "function") {
-      actionCreators[key] = bindActionCreator(actionCreator, dispatch);
-    }
-  }
-
-  return actionCreators;
-}
-
-// src/compose.ts
 function compose(...funcs: Function[]): Function {
   if (funcs.length === 0) {
     return (arg: any): any => arg;
@@ -292,10 +184,33 @@ function compose(...funcs: Function[]): Function {
 }
 
 export interface Middleware {
-  (store: any): (next: (action: any) => any) => (action: any) => any | Promise<any>;
+  (store: any): (next: (action: any) => any) => Promise<(action: any) => any> | any;
 }
 
-// src/applyMiddleware.ts
+function composeMiddleware(...funcs: Middleware[]): Function {
+  if (funcs.length === 0) {
+    return (next: any) => (action: any) => action;
+  }
+
+  const reducer = (a: Middleware, b: Middleware) => {
+    return (next: any) => async (action: any) => {
+      return await a(await b(next))(action);
+    };
+  };
+
+  const composed = funcs.length === 1? funcs[0] : funcs.reduce(reducer);
+
+  const semaphore = new Semaphore(1);
+
+  return (next: any) => {
+    return async (action: any) => {
+      return await semaphore.callFunction(async () => {
+        return await composed(next)(action);
+      });
+    };
+  };
+}
+
 function applyMiddleware(...middlewares: Middleware[]) {
   return (createStore: Function) => (reducer: Function, preloadedState: any) => {
     const store = createStore(reducer, preloadedState);
@@ -307,7 +222,7 @@ function applyMiddleware(...middlewares: Middleware[]) {
       dispatch: (action: any, ...args: any[]) => dispatch(action, ...args)
     };
     const chain = middlewares.map((middleware) => middleware(middlewareAPI));
-    dispatch = compose(...chain)(store.dispatch);
+    dispatch = composeMiddleware(...chain)(store.dispatch);
     return {
       ...store,
       dispatch
@@ -318,10 +233,7 @@ function applyMiddleware(...middlewares: Middleware[]) {
 export {
   actionTypes_default as __DO_NOT_USE__ActionTypes,
   applyMiddleware,
-  bindActionCreators,
   combineReducers,
   compose,
-  createStore,
-  isAction,
-  isPlainObject
+  createStore
 };
