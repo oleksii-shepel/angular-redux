@@ -1,6 +1,5 @@
 import { BehaviorSubject, Observable, Observer, Subscription, UnaryFunction, exhaustMap, firstValueFrom, map } from "rxjs";
 import { AnyFn, isPlainObject, Action, AsyncAction, kindOf, Store, Middleware } from "./types";
-import { Semaphore } from "./semaphore";
 
 const randomString = (): string => Math.random().toString(36).substring(7).split("").join(".");
 
@@ -183,30 +182,6 @@ function compose(...funcs: Function[]): Function {
   return funcs.reduce((a, b) => (...args: any[]) => a(b(...args)));
 }
 
-function composeMiddleware(...funcs: Middleware[]): Function {
-  if (funcs.length === 0) {
-    return (next: any) => (action: any) => action;
-  }
-
-  const reducer = (a: Middleware, b: Middleware) => {
-    return (next: any) => async (action: any) => {
-      return await a(await b(next))(action);
-    };
-  };
-
-  const composed = funcs.length === 1? funcs[0] : funcs.reduce(reducer);
-
-  const semaphore = new Semaphore(1);
-
-  return (next: any) => {
-    return async (action: any) => {
-      return await semaphore.callFunction(async () => {
-        return await composed(next)(action);
-      });
-    };
-  };
-}
-
 function applyMiddleware(...middlewares: Middleware[]) {
   return (createStore: Function) => (reducer: Function, preloadedState: any) => {
     const store = createStore(reducer, preloadedState);
@@ -218,7 +193,7 @@ function applyMiddleware(...middlewares: Middleware[]) {
       dispatch: (action: any, ...args: any[]) => dispatch(action, ...args)
     };
     const chain = middlewares.map((middleware) => middleware(middlewareAPI));
-    dispatch = composeMiddleware(...chain)(store.dispatch);
+    dispatch = compose(...chain)(store.dispatch);
     return {
       ...store,
       dispatch

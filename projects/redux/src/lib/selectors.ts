@@ -1,31 +1,68 @@
-import { Observable, OperatorFunction, exhaustMap, map } from "rxjs";
-import { AnyFn, MemoizedFunction, MemoizedSelector, ProjectorFunction, SelectorFunction } from "./types";
+import { Observable, OperatorFunction, exhaustMap, from, iif, map, mergeMap, of } from "rxjs";
 
+export type AnyFn = (...args: any[]) => any;
 
+export interface SelectorFunction {
+  (state: any, props: any): any;
+}
 
-const defaultMemoize: AnyFn = (fn: AnyFn): MemoizedFunction => {
+export interface ProjectorFunction {
+  (state: any | any[], props: any): any;
+}
+
+export interface MemoizedFunction {
+  (...args: any[]): any;
+  release: () => any;
+}
+
+export interface MemoizedSelectorFunction extends MemoizedFunction, SelectorFunction {
+
+}
+
+export interface MemoizedProjectorFunction extends MemoizedFunction, ProjectorFunction {
+
+}
+
+export interface MemoizedSelector extends MemoizedFunction {
+  (props: any | any[], projectorProps?: any): any;
+  release: () => any;
+}
+
+// Shallow equality check function
+const shallowEqual = (a: any[], b: any[]): boolean => {
+  if (a === b) {
+    return true;
+  }
+  if (a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; i++) {
+    // Always return false when comparing objects, regardless of reference
+    if (typeof a[i] === 'object' && typeof b[i] === 'object') {
+      return false;
+    } else if (a[i] !== b[i]) {
+      // For non-object elements, use strict equality
+      return false;
+    }
+  }
+  return true;
+};
+
+export const defaultMemoize: AnyFn = (fn: AnyFn): MemoizedFunction => {
   let lastArgs: any[] | undefined = undefined;
   let lastResult: any | undefined = undefined;
   let called = false;
 
   const resultFunc: MemoizedFunction = (...args: any[]): any => {
-    if (called && lastArgs !== undefined && args.length === lastArgs.length) {
-      let argsEqual = true;
-      for (let i = 0; i < args.length; i++) {
-        if (args[i] !== lastArgs[i]) {
-          argsEqual = false;
-          break;
-        }
-      }
-      if (argsEqual) {
-        return lastResult;
-      }
+    if (called && lastArgs !== undefined && shallowEqual(args, lastArgs)) {
+      return lastResult;
     }
 
     try {
       const result = fn(...args);
       lastResult = result;
-      lastArgs = args;
+      // Create a shallow copy of the args array to prevent future mutations from affecting the memoization
+      lastArgs = [...args];
       called = true;
       return result;
     } catch (error) {
@@ -43,48 +80,6 @@ const defaultMemoize: AnyFn = (fn: AnyFn): MemoizedFunction => {
   return resultFunc;
 };
 
-function asyncMemoize(fn: AnyFn): MemoizedFunction {
-
-  if (!(fn instanceof Promise) && !((fn as any)?.then instanceof Function)) {
-    return defaultMemoize(fn);
-  }
-
-  const cache = new Map<string, Promise<any>>();
-
-  const memoizedFn: MemoizedFunction = (...args: any[]) => {
-    const key = args.join(':');
-
-    if (cache.has(key)) {
-      return cache.get(key);
-    }
-
-    const promise = new Promise<any>((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error('Function execution timed out'));
-      }, 5000); // Timeout after 5 seconds
-
-      try {
-        const result = fn(...args);
-        clearTimeout(timeout);
-        cache.set(key, Promise.resolve(result));
-        resolve(result);
-      } catch (error) {
-        clearTimeout(timeout);
-        reject(error);
-      }
-    });
-
-    cache.set(key, promise);
-    return promise;
-  };
-
-  memoizedFn.release = () => {
-    cache.clear();
-  };
-
-  return memoizedFn;
-}
-
 export function nomemoize(fn: AnyFn) {
   const func = (...args: any[]) => fn(...args);
   func.release = () => { Function.prototype };
@@ -93,51 +88,60 @@ export function nomemoize(fn: AnyFn) {
 
 export function createSelector(
   selectors: SelectorFunction | SelectorFunction[],
-  projector?: ProjectorFunction,
+  projectorOrOptions?: ProjectorFunction | { memoizeSelectors?: AnyFn; memoizeProjector?: AnyFn },
   options: { memoizeSelectors?: AnyFn; memoizeProjector?: AnyFn } = {}
-
 ): MemoizedSelector {
+  options = typeof projectorOrOptions !== "function" ? projectorOrOptions as any : options || {};
+
   const isSelectorArray = Array.isArray(selectors);
   const selectorArray: SelectorFunction[] = isSelectorArray ? selectors : [selectors];
-  const { memoizeSelectors = asyncMemoize, memoizeProjector = defaultMemoize } = options;
+  const projector = typeof projectorOrOptions === "function" ? projectorOrOptions : undefined;
+
+  // Default memoization functions if not provided
+  const memoizeSelector = options.memoizeSelectors || nomemoize;
+  const memoizeProjector = options.memoizeProjector || nomemoize;
 
   if (isSelectorArray && !projector) {
     throw new Error("Invalid parameters: When 'selectors' is an array, 'projector' function should be provided.");
   }
 
-  const hasAsyncSelectors = selectorArray.some(selector => {
-    return selector instanceof Promise || (selector as any)?.then instanceof Function;
-  });
+  // Memoize each selector
+  const memoizedSelectors = memoizeSelector === nomemoize ? selectorArray : selectorArray.map(selector => memoizeSelector(selector));
+  // If a projector is provided, memoize it; otherwise, use identity function
+  const memoizedProjector = projector ? (memoizeProjector === nomemoize ? projector : memoizeProjector(projector)) : undefined;
 
-  const memoizedSelectors: MemoizedFunction[] = selectorArray.map(selector => memoizeSelectors(selector));
-  const memoizedProjector = memoizeProjector(projector);
+  // The memoizedSelector function will return a function that executes the selectors and projector
+  const memoizedSelector: MemoizedSelector = (state: any, props?: any) => {
+    // Execute each selector with the state and props
+    const resolvedSelectors = memoizedSelectors.map(selector => selector(state, props));
+    // Apply the projector function to the resolved selector values
+    return memoizedProjector ? memoizedProjector(...resolvedSelectors) : resolvedSelectors[0];
+  };
 
-  const memoizedSelector: any = hasAsyncSelectors
-    ? async (state: any, props?: any) => {
-        // Handle asynchronous selectors
-        const selectorResults = await Promise.all(memoizedSelectors.map(selector => selector(state, props)));
-        return projector ? memoizedProjector(...selectorResults, props) : selectorResults[0];
-      }
-    : async (state: any, props?: any) => {
-        // Handle synchronous selectors
-        const selectorResults = await Promise.resolve(memoizedSelectors.map(selector => selector(state, props)));
-        return projector ? memoizedProjector(...selectorResults, props) : selectorResults[0];
-      };
-
+  // Optional: Implement a release method if your memoization functions require cleanup
   memoizedSelector.release = () => {
-    memoizedSelectors.forEach(selector => selector.release());
+    // Release logic here, if necessary
+    memoizedSelectors !== selectorArray ? memoizedSelectors.forEach(selector => selector.release());
     projector && memoizedProjector.release();
   };
 
   return memoizedSelector;
 }
 
-export function select<T, K>(selector: (state: T) => K | Promise<K>): OperatorFunction<T, K> {
+export function select<T, K>(selector: ((state: T) => K) | Promise<K>): OperatorFunction<T, K> {
   return (source: Observable<T>): Observable<K> => {
     return source.pipe(
-      (selector instanceof Promise && (selector as any)?.then instanceof Function)
-        ? exhaustMap(state => Promise.resolve(selector(state)).then(value => value))
-        : map(state => selector(state) as K)
-      );
+      exhaustMap(state => {
+        if (selector instanceof Promise) {
+          // Resolve the promise and then emit its value
+          return from(selector).pipe(
+            mergeMap(resolvedValue => of(resolvedValue))
+          );
+        } else {
+          // 'selector' is a function, call it directly
+          return of(selector(state));
+        }
+      })
+    );
   };
 }
