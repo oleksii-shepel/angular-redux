@@ -1,32 +1,5 @@
 import { Observable, OperatorFunction, exhaustMap, from, iif, map, mergeMap, of } from "rxjs";
-
-export type AnyFn = (...args: any[]) => any;
-
-export interface SelectorFunction {
-  (state: any, props: any): any;
-}
-
-export interface ProjectorFunction {
-  (state: any | any[], props: any): any;
-}
-
-export interface MemoizedFunction {
-  (...args: any[]): any;
-  release: () => any;
-}
-
-export interface MemoizedSelectorFunction extends MemoizedFunction, SelectorFunction {
-
-}
-
-export interface MemoizedProjectorFunction extends MemoizedFunction, ProjectorFunction {
-
-}
-
-export interface MemoizedSelector extends MemoizedFunction {
-  (props: any | any[], projectorProps?: any): any;
-  release: () => any;
-}
+import { AnyFn, MemoizedFunction, MemoizedSelector, ProjectorFunction, SelectorFunction } from "./types";
 
 // Shallow equality check function
 const shallowEqual = (a: any[], b: any[]): boolean => {
@@ -121,7 +94,7 @@ export function createSelector(
   // Optional: Implement a release method if your memoization functions require cleanup
   memoizedSelector.release = () => {
     // Release logic here, if necessary
-    memoizedSelectors !== selectorArray ? memoizedSelectors.forEach(selector => selector.release());
+    memoizedSelectors !== selectorArray && memoizedSelectors.forEach(selector => selector.release());
     projector && memoizedProjector.release();
   };
 
