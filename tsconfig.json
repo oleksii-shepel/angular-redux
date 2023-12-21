@@ -18,7 +18,8 @@
     "importHelpers": true,
     "paths": {
       "redux": [
-        "dist/redux"
+        "dist/redux",
+        "projects/redux/src"
       ]
     },
     "target": "ES2022",
