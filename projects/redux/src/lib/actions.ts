@@ -1,6 +1,6 @@
 import { AsyncFunction, SyncFunction, kindOf } from "./types";
 
-export function createAction<T>(type: string, fn: SyncFunction<T> | AsyncFunction<T>) {
+export function createAction(type: string, fn: SyncFunction<any> | AsyncFunction<any>) {
   return (...args: any[]) => (dispatch: Function, getState?: Function) => {
     const result = fn(...args)(dispatch, getState);
     if (result instanceof Promise && (result as any)?.then instanceof Function) {
