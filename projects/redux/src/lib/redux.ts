@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observer, Subscription } from "rxjs";
-import { Action, AnyFn, Middleware, Reducer, Store, isPlainObject, kindOf } from "./types";
+import { Action, AnyFn, Middleware, Reducer, Store, StoreEnhancer, isPlainObject, kindOf } from "./types";
 
 const randomString = (): string => Math.random().toString(36).substring(7).split("").join(".");
 
@@ -11,7 +11,7 @@ const ActionTypes = {
 
 const actionTypes_default = ActionTypes;
 
-function createStore<K>(reducer: Reducer<any>, preloadedState?: K | undefined, enhancer?: Function): Store<K> {
+function createStore(reducer: Reducer, preloadedState?: any, enhancer?: StoreEnhancer): Store {
 
   if (typeof reducer !== "function") {
     throw new Error(`Expected the root reducer to be a function. Instead, received: '${kindOf(reducer)}'`);
@@ -34,10 +34,10 @@ function createStore<K>(reducer: Reducer<any>, preloadedState?: K | undefined, e
   }
 
   let currentReducer = reducer;
-  let currentState = new BehaviorSubject<K>(preloadedState as K);
+  let currentState = new BehaviorSubject<any>(preloadedState);
   let isDispatching = false;
 
-  function getState(): K {
+  function getState(): any {
     return currentState.value;
   }
 
@@ -77,7 +77,7 @@ function createStore<K>(reducer: Reducer<any>, preloadedState?: K | undefined, e
     }
   }
 
-  function replaceReducer(nextReducer: Reducer<any>): void {
+  function replaceReducer(nextReducer: Reducer): void {
     if (typeof nextReducer !== "function") {
       throw new Error(`Expected the nextReducer to be a function. Instead, received: '${kindOf(nextReducer)}`);
     }
@@ -99,7 +99,7 @@ function createStore<K>(reducer: Reducer<any>, preloadedState?: K | undefined, e
   }
 }
 
-function assertReducerShape(reducers: any): void {
+function assertReducerShape(reducers: Record<string, Reducer>): void {
   const reducerKeys = Object.keys(reducers);
 
   for (const key of reducerKeys) {
@@ -120,7 +120,7 @@ function assertReducerShape(reducers: any): void {
   }
 }
 
-function combineReducers(reducers: any): Function {
+function combineReducers<K>(reducers: Record<string, Reducer>): Reducer {
   const reducerKeys = Object.keys(reducers);
   const finalReducers: any = {};
 
@@ -164,7 +164,7 @@ function combineReducers(reducers: any): Function {
   };
 }
 
-function compose(...funcs: Function[]): Function {
+function compose(...funcs: AnyFn[]): AnyFn {
   if (funcs.length === 0) {
     return (arg: any): any => arg;
   }
@@ -177,7 +177,7 @@ function compose(...funcs: Function[]): Function {
 }
 
 function applyMiddleware(...middlewares: Middleware[]) {
-  return (createStore: Function) => (reducer: Function, preloadedState: any) => {
+  return (createStore: AnyFn) => (reducer: Reducer, preloadedState: any) => {
     const store = createStore(reducer, preloadedState);
     let dispatch = (action: any, ...args: any[]) => {
       throw new Error("Dispatching while constructing your middleware is not allowed. Other middleware would not be applied to this dispatch.");

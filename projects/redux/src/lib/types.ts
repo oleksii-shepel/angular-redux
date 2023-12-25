@@ -14,17 +14,20 @@ export interface AsyncAction<T = any> {
 export type SyncFunction<T> = (...args: any[]) => (dispatch: Function, getState?: Function) => T;
 export type AsyncFunction<T> = (...args: any[]) => (dispatch: Function, getState?: Function) => Promise<T>;
 
-export type Reducer<T> = (state: T | undefined, action: Action<any>) => T | undefined;
+export type Reducer = (state: any, action: Action<any>) => any;
 
 export interface Middleware {
   (store: any): (next: (action: any) => any) => Promise<(action: any) => any> | any;
 }
-export interface Store<K> {
+export interface Store {
   dispatch: (action: Action<any>) => any;
-  getState: () => K;
-  replaceReducer: (newReducer: Reducer<any>) => void;
+  getState: () => any;
+  replaceReducer: (newReducer: Reducer) => void;
   subscribe: (next?: AnyFn | Observer<any>, error?: AnyFn, complete?: AnyFn) => Subscription;
 }
+
+export type StoreCreator = (reducer: Reducer, preloadedState?: any, enhancer?: StoreEnhancer) => Store;
+export type StoreEnhancer = (next: StoreCreator) => StoreCreator;
 
 export type AnyFn = (...args: any[]) => any;
 
