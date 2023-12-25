@@ -1,4 +1,4 @@
-import { Observable, Observer, Subscription, UnaryFunction } from "rxjs";
+import { Observer, Subscription } from "rxjs";
 
 export interface Action<T = any> {
   type: string;
@@ -20,10 +20,9 @@ export interface Middleware {
   (store: any): (next: (action: any) => any) => Promise<(action: any) => any> | any;
 }
 export interface Store<K> {
-  dispatch: (action: Action<any> | AsyncAction<any>) => any;
+  dispatch: (action: Action<any>) => any;
   getState: () => K;
   replaceReducer: (newReducer: Reducer<any>) => void;
-  pipe: (...operators: Array<UnaryFunction<Observable<K>, Observable<any>>>) => Observable<any>;
   subscribe: (next?: AnyFn | Observer<any>, error?: AnyFn, complete?: AnyFn) => Subscription;
 }
 
@@ -128,7 +127,6 @@ function isDate(val: any): boolean {
 }
 
 export {
-  isPlainObject,
-  isAction,
-  kindOf
+  isAction, isPlainObject, kindOf
 };
+
