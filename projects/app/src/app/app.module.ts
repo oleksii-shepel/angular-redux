@@ -1,11 +1,11 @@
 import { InjectionToken, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
-import { RouterModule, Routes } from '@angular/router';
+import { NoPreloading, RouterModule, Routes } from '@angular/router';
 import { applyMiddleware, createStore } from 'projects/redux/src/public-api';
 import { thunk } from 'redux-thunk';
-import { SuppliersModule } from '../suppliers/suppliers.module';
 import { AppComponent } from './app.component';
+import { SuppliersComponent, SuppliersModule } from './suppliers/suppliers.module';
 
 export const STORE = new InjectionToken('redux-store');
 
@@ -15,8 +15,8 @@ export function mainReducer(state = {}, action: any): any {
 
 
 export const routes: Routes = [
-  {path: '', component: AppComponent},
-  {path: 'customers',  loadChildren: () => import('../customers/customers.module').then(m => m.CustomersModule)}
+  { path: '', component: SuppliersComponent },
+  { path: 'customers', loadChildren: () => import('./customers/customers.module').then(m => m.CustomersModule) }
 ]
 
 @NgModule({
@@ -26,7 +26,7 @@ export const routes: Routes = [
   imports: [
     BrowserModule,
     SuppliersModule,
-    RouterModule.forRoot(routes)
+    RouterModule.forRoot(routes, {preloadingStrategy: NoPreloading})
   ],
   providers: [{provide: STORE, useFactory: () => createStore(mainReducer, applyMiddleware(thunk))}],
   bootstrap: [AppComponent]

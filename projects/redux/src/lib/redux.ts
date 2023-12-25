@@ -33,7 +33,8 @@ function createStore(reducer: Reducer, preloadedState?: any, enhancer?: StoreEnh
     return enhancer(createStore)(reducer, preloadedState);
   }
 
-  let currentReducer = reducer;
+  let reducers = {main: reducer} as Record<string, Reducer>;
+  let currentReducer = combineReducers(reducers);
   let currentState = new BehaviorSubject<any>(preloadedState);
   let isDispatching = false;
 
@@ -87,6 +88,11 @@ function createStore(reducer: Reducer, preloadedState?: any, enhancer?: StoreEnh
     });
   }
 
+  function addReducer(featureKey: string, reducer: Reducer) {
+    reducers[featureKey] = reducer;
+    replaceReducer(combineReducers(reducers));
+  }
+
   dispatch({
     type: actionTypes_default.INIT
   });
@@ -94,7 +100,7 @@ function createStore(reducer: Reducer, preloadedState?: any, enhancer?: StoreEnh
   return {
     dispatch,
     getState,
-    replaceReducer,
+    addReducer,
     subscribe
   }
 }

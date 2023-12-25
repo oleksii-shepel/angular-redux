@@ -22,7 +22,7 @@ export interface Middleware {
 export interface Store {
   dispatch: (action: Action<any>) => any;
   getState: () => any;
-  replaceReducer: (newReducer: Reducer) => void;
+  addReducer: (featureKey: string, reducer: Reducer) => void;
   subscribe: (next?: AnyFn | Observer<any>, error?: AnyFn, complete?: AnyFn) => Subscription;
 }
 

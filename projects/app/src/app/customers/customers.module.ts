@@ -1,20 +1,20 @@
 import { CommonModule } from '@angular/common';
 import { Component, Inject, NgModule } from '@angular/core';
-import { Routes } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { Store } from 'projects/redux/src/public-api';
-import { STORE } from '../app/app.module';
+import { STORE } from '../app.module';
 
 export function auxiliaryReducer(state = {}, action: any): any {
   return state;
 }
 
 @Component({
-  selector: 'app-suppliers',
+  selector: 'app-customers',
   template: `<div>Customers work!</div>`,
   styles: [``]
 })
 export class CustomersComponent {
-  title = 'app-suppliers';
+  title = 'app-customers';
 
   ngOnInit() {
 
@@ -30,11 +30,12 @@ export const routes: Routes = [
     CustomersComponent
   ],
   imports: [
-    CommonModule
+    CommonModule,
+    RouterModule.forChild(routes)
   ]
 })
 export class CustomersModule {
   constructor(@Inject(STORE) private store: Store) {
-
+    store.addReducer('customers', auxiliaryReducer);
   }
 }
