@@ -1,24 +1,13 @@
 # Redux-Replica
 
-This library was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.2.0.
+This library is a compact version of Redux, tailored for Angular applications. It provides a predictable state container, helping you write applications that behave consistently and are easy to test.
 
-## Code scaffolding
+## Key Features
+1. **Store**: A central object that holds the application state.
+2. **Reducers**: Pure functions that take the current state and an action, and return a new state.
+3. **Actions**: Objects that represent changes to the state.
+4. **Modules**: Feature modules with their own state and reducers, which can be loaded lazily.
 
-Run `ng generate component component-name --project redux` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module --project redux`.
-> Note: Don't forget to add `--project redux` or else it will be added to the default project in your `angular.json` file. 
+Action creators and selectors are important parts of Redux-like state management systems.
 
-## Build
-
-Run `ng build redux` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Publishing
-
-After building your library with `ng build redux`, go to the dist folder `cd dist/redux` and run `npm publish`.
-
-## Running unit tests
-
-Run `ng test redux` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+This library allows you to structure your Angular application in a way that scales well and is easy to understand, similar to how you would with Redux. It supports Action Creators and Selectors, making it even more powerful and flexible. It’s a great choice for those who want Redux-like behavior without the complexity or size of the full Redux library.

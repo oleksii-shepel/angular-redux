@@ -1,4 +1,3 @@
-import { Observable, OperatorFunction, exhaustMap, from, iif, map, mergeMap, of } from "rxjs";
 import { AnyFn, MemoizedFunction, MemoizedSelector, ProjectorFunction, SelectorFunction } from "./types";
 
 // Shallow equality check function
@@ -99,22 +98,4 @@ export function createSelector(
   };
 
   return memoizedSelector;
-}
-
-export function select<T, K>(selector: ((state: T) => K) | Promise<K>): OperatorFunction<T, K> {
-  return (source: Observable<T>): Observable<K> => {
-    return source.pipe(
-      exhaustMap(state => {
-        if (selector instanceof Promise) {
-          // Resolve the promise and then emit its value
-          return from(selector).pipe(
-            mergeMap(resolvedValue => of(resolvedValue))
-          );
-        } else {
-          // 'selector' is a function, call it directly
-          return of(selector(state));
-        }
-      })
-    );
-  };
 }
