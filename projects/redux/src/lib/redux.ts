@@ -120,7 +120,7 @@ function assertReducerShape(reducers: Record<string, Reducer>): void {
   }
 }
 
-function combineReducers<K>(reducers: Record<string, Reducer>): Reducer {
+function combineReducers(reducers: Record<string, Reducer>): Reducer {
   const reducerKeys = Object.keys(reducers);
   const finalReducers: any = {};
 
@@ -132,7 +132,7 @@ function combineReducers<K>(reducers: Record<string, Reducer>): Reducer {
 
   const finalReducerKeys = Object.keys(finalReducers);
 
-  return function combination(state = {} as any, action: any): any {
+  return function combination(state = {} as any, action: Action<any>): any {
     assertReducerShape(finalReducers);
 
     const nextState: any = {};
