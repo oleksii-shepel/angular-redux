@@ -105,27 +105,6 @@ function createStore(reducer: Reducer, preloadedState?: any, enhancer?: StoreEnh
   }
 }
 
-function assertReducerShape(reducers: Record<string, Reducer>): void {
-  const reducerKeys = Object.keys(reducers);
-
-  for (const key of reducerKeys) {
-    const reducer = reducers[key];
-    const initialState = reducer(undefined, {
-      type: actionTypes_default.INIT
-    });
-
-    if (typeof initialState === "undefined") {
-      throw new Error(`The slice reducer for key "${key}" returned undefined during initialization. If the state passed to the reducer is undefined, you must explicitly return the initial state. The initial state may not be undefined. If you don't want to set a value for this reducer, you can use null instead of undefined.`);
-    }
-
-    if (typeof reducer(undefined, {
-      type: actionTypes_default.PROBE_UNKNOWN_ACTION()
-    }) === "undefined") {
-      throw new Error(`The slice reducer for key "${key}" returned undefined when probed with a random type. Don't try to handle '${actionTypes_default.INIT}' or other actions in "redux/*" namespace. They are considered private. Instead, you must return the current state for any unknown actions, unless it is undefined, in which case you must return the initial state, regardless of the action type. The initial state may not be undefined, but can be null.`);
-    }
-  }
-}
-
 function combineReducers(reducers: Record<string, Reducer>): Reducer {
   const reducerKeys = Object.keys(reducers);
   const finalReducers: any = {};
