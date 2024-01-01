@@ -1,27 +1,13 @@
-# AngularRedux
+# Redux-Replica
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.2.2.
+This library is a compact version of Redux, tailored for Angular applications. It provides a predictable state container, helping you write applications that behave consistently and are easy to test.
 
-## Development server
+## Key Features
+1. **Store**: A central object that holds the application state.
+2. **Reducers**: Pure functions that take the current state and an action, and return a new state.
+3. **Actions**: Objects that represent changes to the state.
+4. **Modules**: Feature modules with their own state and reducers, which can be loaded lazily.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+Action creators and selectors are important parts of Redux-like state management systems.
 
-## Code scaffolding
-
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
-
-## Build
-
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+This library allows you to structure your Angular application in a way that scales well and is easy to understand, similar to how you would with Redux. It supports Action Creators and Selectors, making it even more powerful and flexible. It’s a great choice for those who want Redux-like behavior without the complexity or size of the full Redux library.

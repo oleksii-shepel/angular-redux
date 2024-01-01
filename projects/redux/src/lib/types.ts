@@ -15,6 +15,7 @@ export type SyncFunction<T> = (...args: any[]) => (dispatch: Function, getState?
 export type AsyncFunction<T> = (...args: any[]) => (dispatch: Function, getState?: Function) => Promise<T>;
 
 export type Reducer = (state: any, action: Action<any>) => any;
+export type MetaReducer = (reducer: Reducer) => Reducer;
 
 export interface Middleware {
   (store: any): (next: (action: any) => any) => Promise<(action: any) => any> | any;
