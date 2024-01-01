@@ -20,10 +20,15 @@ export function metaReducer(reducer: Reducer): Reducer {
     // Call the passed in reducer
     const newState = reducer(state, action);
 
-    return newState;
+    // Check if state has changed
+    if (newState !== state) {
+      return newState;
+    }
+
+    // If state hasn't changed, return the original state
+    return state;
   }
 }
-
 
 export const routes: Routes = [
   { path: '', component: SuppliersComponent },

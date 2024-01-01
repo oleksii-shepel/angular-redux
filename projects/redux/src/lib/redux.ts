@@ -139,7 +139,6 @@ function combineReducers(reducers: Record<string, Reducer>): Reducer {
   const finalReducerKeys = Object.keys(finalReducers);
 
   return function combination(state = {} as any, action: Action<any>): any {
-    assertReducerShape(finalReducers);
 
     const nextState: any = {};
     let hasChanged = false;
