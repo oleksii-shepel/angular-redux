@@ -3,6 +3,7 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { NoPreloading, RouterModule, Routes } from '@angular/router';
 import { Reducer, applyMiddleware, compose, createStore } from 'projects/redux/src/public-api';
+import logger from 'redux-logger';
 import { thunk } from 'redux-thunk';
 import { AppComponent } from './app.component';
 import { SuppliersComponent, SuppliersModule } from './suppliers/suppliers.module';
@@ -44,7 +45,7 @@ export const routes: Routes = [
     SuppliersModule,
     RouterModule.forRoot(routes, {preloadingStrategy: NoPreloading})
   ],
-  providers: [{provide: STORE, useFactory: () => createStore(compose(metaReducer)(mainReducer), applyMiddleware(thunk))}],
+  providers: [{provide: STORE, useFactory: () => createStore(compose(metaReducer)(mainReducer), applyMiddleware(thunk, logger))}],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

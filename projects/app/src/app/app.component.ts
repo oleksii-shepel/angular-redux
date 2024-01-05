@@ -14,6 +14,7 @@ export class AppComponent {
     store.subscribe((state: any) => console.log(state));
     const action = createAction('PING', (...args: any[]) => async (dispatch: any, getState: any) => 1);
     store.dispatch(action());
+    store.dispatch({type: 'PONG'});
   }
 
   ngOnInit() {
