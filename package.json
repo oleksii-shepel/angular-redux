@@ -1,6 +1,6 @@
 {
-  "name": "angular-redux",
-  "version": "1.0.0",
+  "name": "redux-replica",
+  "version": "1.0.1",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

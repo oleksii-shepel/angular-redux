@@ -1,15 +1,23 @@
 import { AsyncFunction, SyncFunction, kindOf } from "./types";
 
 export function createAction(type: string, fn: SyncFunction<any> | AsyncFunction<any>) {
-  return (...args: any[]) => (dispatch: Function, getState?: Function) => {
-    const result = fn(...args)(dispatch, getState);
-    if (result instanceof Promise && (result as any)?.then instanceof Function) {
+  return (...args: any[]) => async (dispatch: Function, getState?: Function) => {
+    const result = fn(...args)(dispatch, getState) as any;
+    if (result instanceof Promise && result?.then instanceof Function) {
+      dispatch({ type: `${type}_REQUEST` });
       return result.then(
-        (data) => dispatch({ type: `${type}_SUCCESS`, payload: data }),
-        (error) => dispatch({ type: `${type}_FAILURE`, payload: error, error: true })
+        (data) => {
+          dispatch({ type: `${type}_SUCCESS`, payload: data });
+          return data;
+        },
+        (error) => {
+          dispatch({ type: `${type}_FAILURE`, payload: error, error: true });
+          throw error;
+        }
       );
     } else {
-      return dispatch({ type, payload: result });
+      dispatch({ type, payload: result });
+      return result;
     }
   };
 }

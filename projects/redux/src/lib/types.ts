@@ -8,7 +8,7 @@ export interface Action<T = any> {
 }
 
 export interface AsyncAction<T = any> {
-  (): Promise<T>;
+  (...args: any[]): Promise<T>;
 }
 
 export type SyncFunction<T> = (...args: any[]) => (dispatch: Function, getState?: Function) => T;
@@ -21,7 +21,7 @@ export interface Middleware {
   (store: any): (next: (action: any) => any) => Promise<(action: any) => any> | any;
 }
 export interface Store {
-  dispatch: (action: Action<any>) => any;
+  dispatch: (action: any) => any;
   getState: () => any;
   addReducer: (featureKey: string, reducer: Reducer) => void;
   subscribe: (next?: AnyFn | Observer<any>, error?: AnyFn, complete?: AnyFn) => Subscription;
