@@ -9,11 +9,7 @@ const shallowEqual = (a: any[], b: any[]): boolean => {
     return false;
   }
   for (let i = 0; i < a.length; i++) {
-    // Always return false when comparing objects, regardless of reference
-    if (typeof a[i] === 'object' && typeof b[i] === 'object') {
-      return false;
-    } else if (a[i] !== b[i]) {
-      // For non-object elements, use strict equality
+    if (a[i] !== b[i]) {
       return false;
     }
   }
