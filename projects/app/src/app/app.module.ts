@@ -2,9 +2,9 @@ import { InjectionToken, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
 import { NoPreloading, RouterModule, Routes } from '@angular/router';
-import { Reducer, applyMiddleware, compose, createStore } from 'projects/redux/src/public-api';
 import logger from 'redux-logger';
 import { thunk } from 'redux-thunk';
+import { Reducer, applyMiddleware, compose, createStore } from 'replique';
 import { AppComponent } from './app.component';
 import { SuppliersComponent, SuppliersModule } from './suppliers/suppliers.module';
 

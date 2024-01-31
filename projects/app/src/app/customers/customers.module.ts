@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Inject, NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { Store } from 'projects/redux/src/public-api';
+import { Store } from 'replique';
 import { STORE } from '../app.module';
 
 export function auxiliaryReducer(state = {}, action: any): any {
