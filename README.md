@@ -1,4 +1,4 @@
-# Redux-Replica
+# redux-replique
 
 This library is a compact version of Redux, tailored for Angular applications. It provides a predictable state container, helping you write applications that behave consistently and are easy to test.
 

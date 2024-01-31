@@ -1,5 +1,5 @@
 import { Component, Inject } from '@angular/core';
-import { Store, createAction } from 'redux-replica';
+import { Store, createAction } from 'redux-replique';
 import { STORE } from './app.module';
 
 @Component({

@@ -17,9 +17,9 @@
     "moduleResolution": "node",
     "importHelpers": true,
     "paths": {
-      "redux-replica": [
-        "dist/redux",
-        "projects/redux/src/public-api.ts"
+      "redux-replique": [
+        "dist/replique",
+        "projects/replique/src/public-api.ts"
       ]
     },
     "target": "ES2022",

@@ -3,23 +3,23 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "redux": {
+    "replique": {
       "projectType": "library",
-      "root": "projects/redux",
-      "sourceRoot": "projects/redux/src",
+      "root": "projects/replique",
+      "sourceRoot": "projects/replique/src",
       "prefix": "lib",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:ng-packagr",
           "options": {
-            "project": "projects/redux/ng-package.json"
+            "project": "projects/replique/ng-package.json"
           },
           "configurations": {
             "production": {
-              "tsConfig": "projects/redux/tsconfig.lib.prod.json"
+              "tsConfig": "projects/replique/tsconfig.lib.prod.json"
             },
             "development": {
-              "tsConfig": "projects/redux/tsconfig.lib.json"
+              "tsConfig": "projects/replique/tsconfig.lib.json"
             }
           },
           "defaultConfiguration": "production"
@@ -27,7 +27,7 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "tsConfig": "projects/redux/tsconfig.spec.json",
+            "tsConfig": "projects/replique/tsconfig.spec.json",
             "polyfills": [
               "zone.js",
               "zone.js/testing"
