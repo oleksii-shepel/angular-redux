@@ -36,7 +36,7 @@ export interface SelectorFunction {
   (state: any, props: any): any;
 }
 
-export interface ProjectorFunction {
+export interface ProjectionFunction {
   (state: any | any[], props: any): any;
 }
 
@@ -49,12 +49,12 @@ export interface MemoizedSelectorFunction extends MemoizedFunction, SelectorFunc
 
 }
 
-export interface MemoizedProjectorFunction extends MemoizedFunction, ProjectorFunction {
+export interface MemoizedProjectionFunction extends MemoizedFunction, ProjectionFunction {
 
 }
 
 export interface MemoizedSelector extends MemoizedFunction {
-  (props: any | any[], projectorProps?: any): any;
+  (props: any | any[], projectionProps?: any): any;
   release: () => any;
 }
 
@@ -131,6 +131,6 @@ function isDate(val: any): boolean {
 }
 
 export {
-  isAction, isPlainObject, kindOf
+    isAction, isPlainObject, kindOf
 };
 
