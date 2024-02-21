@@ -1,23 +1,33 @@
 import { AsyncFunction, SyncFunction, kindOf } from "./types";
 
-export function createAction(type: string, fn?: SyncFunction<any> | AsyncFunction<any>) {
-  return (...args: any[]) => async (dispatch: Function, getState?: Function, dependencies?: Record<string, any>) => {
-    if (!fn) {
-      dispatch({ type });
-      return;
-    }
+export function createAction(action: string | { type: string } & any, fn?: Function) {
+  if(typeof action === 'string') {
+    action = {type: action};
+  } else if (typeof action !== 'object' || action === null || !action.type) {
+    throw new Error('Action must be a string or an object with a type property');
+  }
 
-    dispatch({ type: `${type}_REQUEST` });
+  if (!fn) {
+    return () => action;
+  }
+
+  return (...args: any[]) => async (dispatch: Function, getState?: Function, dependencies?: Record<string, any>) => {
+    dispatch({ ...action, type: `${action.type}_REQUEST` });
+
     try {
-      const data = await fn(...args)(dispatch, getState, dependencies);
-      dispatch({ type: `${type}_SUCCESS`, payload: data });
-      return data;
+      const result = fn(...args);
+      const payload = typeof result === 'function' ? await result(dispatch, getState, dependencies) : await result;
+
+      dispatch({ ...action, type: `${action.type}_SUCCESS`, payload });
+      return payload;
     } catch (error) {
-      dispatch({ type: `${type}_FAILURE`, payload: error, error: true });
+      dispatch({ ...action, type: `${action.type}_FAILURE`, payload: error, error: true });
       throw error;
     }
   };
 }
+
+
 
 export function bindActionCreator(actionCreator: Function, dispatch: Function): Function {
   return function(this: any, ...args: any[]): any {
