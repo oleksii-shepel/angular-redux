@@ -1,3 +1,4 @@
+import { isAction } from "replique";
 import { kindOf } from "./types";
 
 export function createAction(typeOrThunk: string | Function, payloadCreator?: Function): any {
