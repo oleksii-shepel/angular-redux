@@ -1,4 +1,4 @@
-import { AnyFn, MemoizedSelector, ProjectionFunction } from "./types";
+import { AnyFn, MemoizedFn, ProjectionFunction } from "./types";
 
 // Shallow equality check function
 const shallowEqual = (a: any[], b: any[]): boolean => {
@@ -16,12 +16,12 @@ const shallowEqual = (a: any[], b: any[]): boolean => {
   return true;
 };
 
-export const defaultMemoize: AnyFn = (fn: AnyFn): MemoizedSelector => {
+export const defaultMemoize: AnyFn = (fn: AnyFn): MemoizedFn => {
   let lastArgs: any[] | undefined = undefined;
   let lastResult: any | undefined = undefined;
   let called = false;
 
-  const resultFunc: MemoizedSelector = (...args: any[]): any => {
+  const resultFunc: MemoizedFn = (...args: any[]): any => {
     if (called && lastArgs !== undefined && shallowEqual(args, lastArgs)) {
       return lastResult;
     }
@@ -58,7 +58,7 @@ export function createSelector(
   selectors: AnyFn | AnyFn[],
   projectionOrOptions?: ProjectionFunction | { memoizeSelectors?: AnyFn; memoizeProjection?: AnyFn },
   options: { memoizeSelectors?: AnyFn; memoizeProjection?: AnyFn } = {}
-): (props?: any[] | any, projectionProps?: any) => MemoizedSelector {
+): (props?: any[] | any, projectionProps?: any) => MemoizedFn {
   options = (typeof projectionOrOptions !== "function" ? projectionOrOptions : options) || {};
 
   const isSelectorArray = Array.isArray(selectors);

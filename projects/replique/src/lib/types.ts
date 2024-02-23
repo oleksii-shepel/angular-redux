@@ -40,8 +40,7 @@ export interface ProjectionFunction {
   (state: any | any[], props?: any): any;
 }
 
-export interface MemoizedSelector {
-  (state: any): any;
+export interface MemoizedFn extends AnyFn {
   release: () => any;
 }
 
