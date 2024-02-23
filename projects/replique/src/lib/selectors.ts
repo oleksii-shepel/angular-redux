@@ -1,4 +1,4 @@
-import { AnyFn, MemoizedFunction, MemoizedSelector, ProjectionFunction, SelectorFunction } from "./types";
+import { AnyFn, MemoizedSelector, ProjectionFunction } from "./types";
 
 // Shallow equality check function
 const shallowEqual = (a: any[], b: any[]): boolean => {
@@ -16,12 +16,12 @@ const shallowEqual = (a: any[], b: any[]): boolean => {
   return true;
 };
 
-export const defaultMemoize: AnyFn = (fn: AnyFn): MemoizedFunction => {
+export const defaultMemoize: AnyFn = (fn: AnyFn): MemoizedSelector => {
   let lastArgs: any[] | undefined = undefined;
   let lastResult: any | undefined = undefined;
   let called = false;
 
-  const resultFunc: MemoizedFunction = (...args: any[]): any => {
+  const resultFunc: MemoizedSelector = (...args: any[]): any => {
     if (called && lastArgs !== undefined && shallowEqual(args, lastArgs)) {
       return lastResult;
     }
@@ -55,14 +55,14 @@ export function nomemoize(fn: AnyFn) {
 }
 
 export function createSelector(
-  selectors: SelectorFunction | SelectorFunction[],
+  selectors: AnyFn | AnyFn[],
   projectionOrOptions?: ProjectionFunction | { memoizeSelectors?: AnyFn; memoizeProjection?: AnyFn },
   options: { memoizeSelectors?: AnyFn; memoizeProjection?: AnyFn } = {}
 ): (props?: any[] | any, projectionProps?: any) => MemoizedSelector {
   options = (typeof projectionOrOptions !== "function" ? projectionOrOptions : options) || {};
 
   const isSelectorArray = Array.isArray(selectors);
-  const selectorArray: SelectorFunction[] = isSelectorArray ? selectors : [selectors];
+  const selectorArray: AnyFn[] = isSelectorArray ? selectors : [selectors];
   const projection = typeof projectionOrOptions === "function" ? projectionOrOptions : undefined;
 
   // Default memoization functions if not provided
@@ -78,29 +78,30 @@ export function createSelector(
   // If a projection is provided, memoize it; otherwise, use identity function
   const memoizedProjection = projection ? (memoizeProjection === nomemoize ? projection : memoizeProjection(projection)) : undefined;
 
-  // The createSelector function will return a function that takes some arguments and returns a memoizedSelector function
-  return (props: any[] | any, projectionProps: any) => {
+  // The createSelector function will return a function that takes some arguments and returns a SelectorFunction or an array of SelectorFunctions
+  return (props?: any[] | any, projectionProps?: any) => {
     if(!Array.isArray(props)) {
       props = [props];
     }
     // The memoizedSelector function will return a function that executes the selectors and projection
-    const memoizedSelector = (state: any) => {
-      // Execute each selector with the state and props
-      const values = memoizedSelectors.map((selector, index) => selector(state, props[index]));
+    const fn = (state: any) => {
+      const selectorResults = memoizedSelectors.map((selector, index) => selector(state, props[index]));
 
-      // Apply the projection function to the resolved values
-      return memoizedProjection ? memoizedProjection(...values, projectionProps) : values[0];
+      if(selectorResults.length === 1) {
+        // Apply the projection function to the resolved values
+        return memoizedProjection ? memoizedProjection(selectorResults[0], projectionProps) : selectorResults[0];
+      } else {
+        return memoizedProjection ? memoizedProjection(selectorResults, projectionProps) : undefined;
+      }
     };
 
-    const selector = memoizedSelector as MemoizedSelector;
-
-    // Optional: Implement a release method if your memoization functions require cleanup
-    selector.release = () => {
+    // Implement a release method if your memoization functions require cleanup
+    fn.release = () => {
       // Release logic here, if necessary
       memoizedSelectors !== selectorArray && memoizedSelectors.forEach(ms => ms.release());
       projection && memoizedProjection.release();
-    };
+    }
 
-    return selector;
+    return fn;
   };
 }
